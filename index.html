@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotionSync 3D - Ultimate ESP32 Flasher</title>
+    <!-- ESP Web Tools Integration -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-dark: #0a0e2a;
+            --primary: #1a237e;
+            --primary-light: #303f9f;
+            --accent: #536dfe;
+            --accent-glow: #7986cb;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3cc;
+            --card-bg: rgba(25, 30, 70, 0.85);
+            --card-border: rgba(83, 109, 254, 0.4);
+            --success: #00e676;
+            --warning: #ffc400;
+            --error: #ff5252;
+            --transition: all 0.3s ease;
+            --border-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            z-index: 1;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            position: relative;
+            animation: slideDown 1s ease-out;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin-right: 1.5rem;
+            color: var(--accent);
+            filter: drop-shadow(0 0 15px var(--accent-glow));
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(83, 109, 254, 0.3);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .flash-section {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            animation: slideUp 1s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flash-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(83, 109, 254, 0.1), transparent 70%);
+            pointer-events: none;
+        }
+
+        .flash-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .flash-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .flash-content p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            display: none;
+            text-align: left;
+            border-left: 4px solid transparent;
+        }
+
+        .status.visible {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .status.success {
+            background: rgba(0, 230, 118, 0.1);
+            border-left-color: var(--success);
+        }
+
+        .status.error {
+            background: rgba(255, 82, 82, 0.1);
+            border-left-color: var(--error);
+        }
+
+        .status.warning {
+            background: rgba(255, 196, 0, 0.1);
+            border-left-color: var(--warning);
+        }
+
+        .status.info {
+            background: rgba(83, 109, 254, 0.1);
+            border-left-color: var(--accent);
+        }
+
+        /* God-level animated install button */
+        .god-button {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary-light), var(--accent), #ff2a6d, var(--primary-light));
+            background-size: 300% 300%;
+            color: white;
+            border: none;
+            padding: 1.5rem 3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1.5rem 0;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(83, 109, 254, 0.5);
+            animation: gradientShift 3s ease infinite, pulseGlow 2s ease-in-out infinite;
+        }
+
+        .god-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(83, 109, 254, 0.7), 0 0 30px rgba(83, 109, 254, 0.5);
+        }
+
+        .god-button:active {
+            transform: translateY(0) scale(1);
+        }
+
+        .god-button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        .god-button i {
+            margin-right: 0.8rem;
+            font-size: 1.5rem;
+        }
+
+        /* Particle burst effect */
+        .particle-burst {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleAnimation 1s ease-out forwards;
+        }
+
+        .instructions {
+            margin-top: 2.5rem;
+            padding: 1.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+        }
+
+        .instructions h3 i {
+            margin-right: 0.8rem;
+        }
+
+        .instructions ol {
+            padding-left: 1.8rem;
+            color: var(--text-secondary);
+        }
+
+        .instructions li {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2.5rem 0;
+            margin-top: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .powered-by {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+        }
+
+        .powered-by .icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 0.6rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+            color: var(--accent-glow);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 10px 30px rgba(83, 109, 254, 0.5), 极 0 20px rgba(83, 109, 254, 0.3); }
+            50% { box-shadow: 0 10极 30px rgba(83, 109, 254, 0.5), 0 0 40px rgba(83, 109, 254, 0.6); }
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+
+        @keyframes particleAnimation {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .flash-section {
+                padding: 1.8rem;
+            }
+            
+            .god-button {
+                padding: 1.2rem 2rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .logo-icon {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .flash-section {
+                padding: 1.5rem;
+            }
+            
+            .god-button {
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle.js Background -->
+    <div id="particles-js"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10 L90 50 L50 90 L10 50 Z" stroke="currentColor" stroke-width="8" fill="none" />
+                    <circle cx="50" cy="50" r="20" stroke="current极" stroke-width="5" fill="none" />
+                    <path d="M35 35 L65 65 M65 35 L35 65" stroke="currentColor" stroke-width="5" />
+                </svg>
+                <h1>MotionSync 3D - ESP32 Flasher</h1>
+            </div>
+            <p class="subtitle">Connect and flash your ESP32 device to control 3D models with motion tracking</p>
+        </header>
+
+        <div class="flash-section">
+            <div class="flash-content">
+                <h2>Install Firmware</h2>
+                <p>Click the button below to install the MotionSync 3D firmware on your ESP32 device. Ensure your device is connected via USB before proceeding.</p>
+                
+                <!-- God-level animated install button -->
+                <div style="position: relative; display: inline-block;">
+                    <esp-web-install-button manifest="manifest.json">
+                        <button slot="activate" class="god-button">
+                            <i class="fas fa-bolt"></i> Flash Firmware
+                        </button>
+                        <span slot="unsupported">Your browser does not support Web Serial. Try Chrome or Edge.</span>
+                        <span slot="not-allowed">Web Serial access is not allowed in this browser. Check permissions.</span>
+                    </esp-web-install-button>
+                    <div class="particle-burst" id="particleBurst"></div>
+                </div>
+                
+                <div id="status" class="status"></div>
+            </div>
+
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> Installation Guide</h3>
+                <ol>
+                    <li>Connect your <strong>MotionSync 3D</strong> device to your computer using a USB data cable.</li>
+                    <li>Click the <strong style="color: var(--accent);">Flash Firmware</strong> button above.</li>
+                    <li>Select the correct COM port when prompted by your browser.</li>
+                    <li>Wait for the installation to complete. Do not disconnect during the process.</li>
+                    <li>Once installed, the device will restart and be ready for use.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2024 MotionSync 3D. All Rights Reserved.</p>
+            <div class="powered-by">
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2 5a3 3 0 013-3h10a3 3 0 013 3极10a3 3 0 01-3 3H5a3 3 0 01-3-3V5zm4 1h8a1 1 0 011 1v2a1 1 0 01-1 1H6a1 1 极 01-1-1V7a1 1 0 011-1zm-1 6a1 1 0 00-1 1v2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5zm4 0a1 1 0 00-1 1v2a1 1 0 001 1极2a1 1 0 001-1v-2a1 1 0 00-1-1H9zm4 0a1 1 0 00-1 1极2a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2z" clip-rule="evenodd"></path>
+                </svg>
+                <span>Powered by ESP Web Tools</span>
+            </div>
+            <p>Developed by Sk Raihan | <a href="https://www.skrelectronicslab.com" target="_blank" rel="noopener noreferrer">SKR Electronics Lab</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Initialize particle.js background
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 100, density: { enable: true, value_area: 800 } },
+                    color: { value: ["#536dfe", "#00d4ff", "#ff2a6d"] },
+                    shape: { 
+                        type: ["circle", "triangle", "polygon"],
+                        polygon: { nb_sides: 5 }
+                    },
+                    opacity: { value: 0.7, random: true },
+                    size: { value: 4, random: true },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: "#3f51b5",
+                        opacity: 0.6,
+                        width: 1.5
+                    },
+                    move: {
+                        enable: true,
+                        speed: 3,
+                        direction: "none",
+                        random: true,
+                        straight: false,
+                        out_mode: "out",
+                        bounce: false
+                    }
+                },
+                interactivity: {
+                    detect_on: "canvas",
+                    events: {
+                        onhover: { enable: true, mode: "repulse" },
+                        onclick: { enable: true, mode: "push" },
+                        resize: true
+                    },
+                    modes: {
+                        repulse: { distance: 100, duration: 0.4 },
+                        push: { particles_nb: 6 }
+                    }
+                },
+                retina_detect: true
+            });
+
+            // Set up ESP Web Tools event listeners
+            const espButton = document.querySelector('esp-web-install-button');
+            if (espButton) {
+                espButton.addEventListener('state-changed', (ev) => {
+                    const statusElement = document.getElementById('status');
+                    statusElement.className = 'status visible';
+                    
+                    switch(ev.detail.state) {
+                        case 'ready':
+                            statusElement.textContent = 'Ready to install firmware. Click the button to begin.';
+                            statusElement.classList.add('info');
+                            break;
+                        case 'installing':
+                            statusElement.textContent = 'Installing firmware... Please wait.';
+                            statusElement.classList.add('warning');
+                            break;
+                        case 'installed':
+                            statusElement.textContent = 'Firmware installed successfully!';
+                            statusElement.classList.add('success');
+                            createParticleBurst();
+                            break;
+                        case 'error':
+                            statusElement.textContent = 'Installation failed. Check connection and try again.';
+                            statusElement.classList.add('error');
+                            break;
+                    }
+                });
+            }
+
+            // Add particle burst effect to the install button
+            const installButton = document.querySelector('.god-button');
+            if (installButton) {
+                installButton.addEventListener('click', function() {
+                    createParticleBurst();
+                });
+            }
+        });
+
+        // Create particle burst effect
+        function createParticleBurst() {
+            const burstContainer = document.getElementById('particleBurst');
+            burstContainer.innerHTML = '';
+            
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Randomize particle properties
+                const size = Math.random() * 5 + 2;
+                const tx = (Math.random() - 0.5) * 200;
+                const ty = (Math.random() - 0.5) * 200;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                
+                // Random color from accent colors
+                const colors = ['#536dfe', '#00d4极', '#ff2a6d'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                burstContainer.appendChild(particle);
+            }
+            
+            // Remove particles after animation
+            setTimeout(() => {
+                burstContainer.innerHTML = '';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

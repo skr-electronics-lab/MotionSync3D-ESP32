@@ -1,0 +1,14 @@
+{
+  "name": "MotionSync3D Firmware",
+  "version": "1.0.8",
+  "new_install_prompt_erase": true,
+  "new_install_improv_wait_time": 12,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "MotionSync3D_firmware_v1.0.8.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
